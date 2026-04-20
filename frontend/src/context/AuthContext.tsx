@@ -26,9 +26,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setLoading(true);
-    fetch('/graphql', {
-      method: 'POST',
+    const apiUrl = import.meta.env.VITE_API_URL || '/graphql';
+setLoading(true);
+fetch(apiUrl, {
+  method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${storedToken}`,
