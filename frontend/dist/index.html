@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>FoodSave — Reduce Waste, Feed Communities</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1a12;--bg-soft:#162019;--bg-muted:#1e2d22;--border:#2a3d2e;
+  --green:#22c55e;--green-d:#16a34a;--green-l:#4ade80;
+  --amber:#e5a348;--amber-d:#c4701e;
+  --white:#fff;--muted:rgba(255,255,255,0.45);--faint:rgba(255,255,255,0.15);
+  --red:#f87171;--blue:#60a5fa;
+}
+body{background:var(--bg);color:var(--white);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;
+  background-image:radial-gradient(ellipse at 20% 20%,rgba(34,197,94,.06) 0,transparent 50%),
+    radial-gradient(ellipse at 80% 80%,rgba(229,163,72,.04) 0,transparent 50%)}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;border:none;background:none;color:inherit;font:inherit}
+input,select,textarea{font:inherit}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* Layout */
+#app{display:flex;min-height:100vh}
+#sidebar{width:220px;flex-shrink:0;background:rgba(15,26,18,.85);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;backdrop-filter:blur(8px)}
+#main{flex:1;overflow-y:auto;min-width:0}
+.page{padding:24px;max-width:1100px}
+
+/* Sidebar */
+.sb-logo{padding:18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sb-logo-icon{width:32px;height:32px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.sb-logo-text{font-weight:700;font-size:17px;letter-spacing:-.3px}
+.sb-user{padding:12px;border-bottom:1px solid var(--border)}
+.sb-avatar{width:34px;height:34px;border-radius:50%;background:rgba(34,197,94,.2);
+  border:1px solid rgba(34,197,94,.3);display:flex;align-items:center;justify-content:center;
+  font-weight:600;font-size:12px;color:var(--green-l);flex-shrink:0}
+.sb-user-row{display:flex;align-items:center;gap:8px}
+.sb-user-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-role{font-size:10px;padding:1px 6px;border-radius:4px;border:1px solid;margin-top:2px;display:inline-block}
+.role-ADMIN{color:var(--blue);border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.1)}
+.role-DONOR{color:var(--amber);border-color:rgba(229,163,72,.3);background:rgba(229,163,72,.1)}
+.role-RECIPIENT{color:var(--green-l);border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.1)}
+.sb-nav{flex:1;padding:8px;overflow-y:auto}
+.sb-link{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;font-size:13px;
+  font-weight:500;color:var(--muted);transition:all .15s;position:relative}
+.sb-link:hover{color:var(--white);background:var(--bg-muted)}
+.sb-link.active{color:var(--white);background:var(--bg-muted);border:1px solid var(--border)}
+.sb-link-icon{width:16px;text-align:center;flex-shrink:0}
+.notif-badge{margin-left:auto;background:var(--green);color:#fff;font-size:10px;
+  width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.sb-bottom{padding:8px;border-top:1px solid var(--border)}
+.sb-logout{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;
+  font-size:13px;font-weight:500;color:var(--muted);transition:all .15s}
+.sb-logout:hover{color:var(--red);background:rgba(248,113,113,.08)}
+
+/* Cards & UI */
+.card{background:rgba(22,32,25,.7);border:1px solid var(--border);border-radius:16px;backdrop-filter:blur(4px)}
+.stat-grid{display:grid;gap:10px}
+.stat-card{padding:16px;display:flex;flex-direction:column;gap:4px}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.stat-val{font-size:24px;font-weight:700}
+.stat-sub{font-size:11px;color:var(--muted)}
+.section-title{font-size:16px;font-weight:600;margin-bottom:14px}
+.page-title{font-size:24px;font-weight:700;margin-bottom:4px}
+.muted{color:var(--muted);font-size:13px}
+.gap{margin-bottom:20px}
+
+/* Buttons */
+.btn{padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:active{transform:scale(.97)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:var(--green-d)}
+.btn-muted{background:var(--bg-muted);color:var(--white);border:1px solid var(--border)}.btn-muted:hover{background:var(--border)}
+.btn-red{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.2)}.btn-red:hover{background:rgba(248,113,113,.25)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:8px}
+.btn-full{width:100%;justify-content:center;padding:11px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Forms */
+.form-group{margin-bottom:14px}
+.label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px}
+.input{width:100%;background:var(--bg-muted);border:1px solid var(--border);border-radius:10px;
+  padding:10px 14px;color:var(--white);font-size:14px;transition:border .15s}
+.input:focus{outline:none;border-color:var(--green)}
+.input::placeholder{color:var(--faint)}
+select.input option{background:var(--bg-muted);color:var(--white)}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500}
+.badge-green{background:rgba(34,197,94,.15);color:var(--green-l)}
+.badge-amber{background:rgba(229,163,72,.15);color:var(--amber)}
+.badge-blue{background:rgba(96,165,250,.15);color:var(--blue)}
+.badge-red{background:rgba(248,113,113,.15);color:var(--red)}
+.badge-muted{background:rgba(255,255,255,.08);color:var(--muted)}
+
+/* Alert */
+.alert{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.alert-error{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:var(--red)}
+.alert-success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:var(--green-l)}
+
+/* Auth page */
+#auth-page{display:flex;min-height:100vh}
+.auth-left{width:380px;flex-shrink:0;padding:40px;border-right:1px solid var(--border);
+  background:var(--bg-soft);display:flex;flex-direction:column;justify-content:space-between}
+.auth-right{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-form{width:100%;max-width:420px}
+.auth-tabs{display:flex;gap:4px;padding:4px;background:var(--bg-muted);border:1px solid var(--border);
+  border-radius:12px;margin-bottom:22px}
+.auth-tab{flex:1;padding:7px;border-radius:9px;font-size:13px;font-weight:600;transition:all .15s;color:var(--muted)}
+.auth-tab.active{background:var(--green);color:#fff}
+.demo-box{background:var(--bg-muted);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:20px}
+.demo-item{display:flex;gap:8px;padding:4px 6px;border-radius:6px;cursor:pointer;transition:background .15s;width:100%;text-align:left}
+.demo-item:hover{background:var(--border)}
+.demo-role{font-size:11px;color:var(--muted);width:60px;font-family:monospace}
+.demo-email{font-size:12px;color:rgba(255,255,255,.6)}
+
+/* Listing card */
+.listing-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.listing-card{border-radius:14px;overflow:hidden;transition:all .2s;cursor:pointer}
+.listing-card:hover{border-color:rgba(34,197,94,.35)!important}
+.listing-strip{height:3px;background:linear-gradient(90deg,var(--green-d),var(--green-l))}
+.listing-body{padding:14px}
+.listing-title{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.listing-org{font-size:11px;color:var(--muted)}
+.listing-meta{margin-top:10px;display:flex;flex-direction:column;gap:4px}
+.listing-meta-row{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal{background:var(--bg-soft);border:1px solid var(--border);border-radius:18px;
+  width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:600}
+.modal-body{padding:20px}
+.modal-close{color:var(--muted);font-size:18px;line-height:1}.modal-close:hover{color:var(--white)}
+
+/* Spinner */
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--green);
+  border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.full-spinner{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;gap:14px}
+.page-spinner{display:flex;justify-content:center;padding:60px}
+
+/* Empty */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-title{font-size:16px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:6px}
+
+/* Row items */
+.row-item{display:flex;align-items:center;gap:14px;padding:14px;transition:border-color .15s}
+.row-item:hover{border-color:rgba(34,197,94,.2)!important}
+
+/* Claim panel */
+.claim-panel{border-top:1px solid var(--border);background:var(--bg-soft)}
+.claim-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.claim-row:last-child{border-bottom:none}
+
+/* Progress bar */
+.progress-bg{height:10px;background:var(--bg-muted);border-radius:5px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green-d),var(--green-l));border-radius:5px;transition:width .6s}
+
+/* Filter bar */
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;padding:14px;margin-bottom:16px}
+.filter-btn{padding:5px 12px;border-radius:8px;font-size:12px;font-weight:500;transition:all .15s;border:1px solid var(--border);background:var(--bg-muted);color:var(--muted)}
+.filter-btn:hover{color:var(--white)}
+.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+.search-wrap{position:relative;flex:1;min-width:180px}
+.search-wrap input{padding-left:34px}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px}
+
+@media(max-width:640px){
+  #sidebar{width:180px}
+  .auth-left{display:none}
+  .listing-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+const S = {
+  token: localStorage.getItem('token'),
+  user: null,
+  page: 'dashboard',
+  pageData: {},
+  modal: null,
+  loading: true,
+  notifCount: 0,
+};
+
+// ─── GraphQL ──────────────────────────────────────────────────────────────────
+async function gql(query, variables = {}) {
+  const res = await fetch('/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(S.token ? { Authorization: `Bearer ${S.token}` } : {}),
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  const data = await res.json();
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data.data;
+}
+
+// ─── Router ───────────────────────────────────────────────────────────────────
+function navigate(page, data = {}) {
+  S.page = page;
+  S.pageData = data;
+  render();
+  loadPage(page);
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+async function boot() {
+  if (!S.token) { S.loading = false; render(); return; }
+  try {
+    const d = await gql(`query{me{id email name role phone address latitude longitude organization isActive createdAt unreadNotificationCount}}`);
+    S.user = d.me;
+    S.notifCount = d.me?.unreadNotificationCount || 0;
+  } catch(e) {
+    localStorage.removeItem('token');
+    S.token = null;
+  }
+  S.loading = false;
+  render();
+  if (S.user) loadPage(S.page);
+}
+
+async function doLogin(email, password) {
+  const d = await gql(`mutation Login($e:String!,$p:String!){login(email:$e,password:$p){token user{id email name role phone address organization isActive createdAt unreadNotificationCount}}}`,
+    { e: email, p: password });
+  S.token = d.login.token;
+  S.user = d.login.user;
+  S.notifCount = d.login.user.unreadNotificationCount || 0;
+  localStorage.setItem('token', S.token);
+  navigate('dashboard');
+}
+
+async function doRegister(vars) {
+  const d = await gql(`mutation Register($email:String!,$password:String!,$name:String!,$role:UserRole!,$phone:String,$address:String,$organization:String){
+    register(email:$email,password:$password,name:$name,role:$role,phone:$phone,address:$address,organization:$organization){
+      token user{id email name role phone address organization isActive createdAt unreadNotificationCount}}}`, vars);
+  S.token = d.register.token;
+  S.user = d.register.user;
+  localStorage.setItem('token', S.token);
+  navigate('dashboard');
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  S.token = null; S.user = null; S.notifCount = 0;
+  navigate('login');
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  if (S.loading) { app.innerHTML = fullSpinner(); return; }
+  if (!S.user) { app.innerHTML = renderAuth(); bindAuth(); return; }
+  app.innerHTML = `<div id="sidebar">${renderSidebar()}</div><div id="main"><div class="page" id="page-content">${renderPage()}</div></div>`;
+  bindSidebar();
+  bindPage();
+}
+
+function fullSpinner() {
+  return `<div class="full-spinner"><div class="spinner"></div><p style="color:var(--muted);font-size:14px">Loading…</p></div>`;
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+function avatar(name) {
+  const i = (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  return `<div class="sb-avatar">${i}</div>`;
+}
+
+function badge(role) {
+  return `<span class="sb-role role-${role}">${role}</span>`;
+}
+
+function navLinks() {
+  const r = S.user.role;
+  const all = [
+    { page:'dashboard', icon:'&#x229E;', label:'Dashboard', roles:['ADMIN','DONOR','RECIPIENT'] },
+    { page:'browse', icon:'&#x1F343;', label:'Browse Food', roles:['RECIPIENT','ADMIN'] },
+    { page:'create-listing', icon:'&#xFF0B;', label:'Donate Food', roles:['DONOR','ADMIN'] },
+    { page:'my-listings', icon:'&#x1F4E6;', label:'My Listings', roles:['DONOR'] },
+    { page:'my-claims', icon:'&#x1F4CB;', label:'My Claims', roles:['RECIPIENT'] },
+    { page:'notifications', icon:'&#x1F514;', label:'Notifications', roles:['ADMIN','DONOR','RECIPIENT'] },
+    { page:'admin-users', icon:'&#x1F465;', label:'Users', roles:['ADMIN'] },
+    { page:'admin-listings', icon:'&#x1F4CB;', label:'All Listings', roles:['ADMIN'] },
+    { page:'admin-analytics', icon:'&#x1F4CA;', label:'Analytics', roles:['ADMIN'] },
+  ];
+  return all.filter(l=>l.roles.includes(r)).map(l=>`
+    <button class="sb-link${S.page===l.page?' active':''}" onclick="navigate('${l.page}')">
+      <span class="sb-link-icon">${l.icon}</span>${l.label}
+      ${l.page==='notifications'&&S.notifCount>0?`<span class="notif-badge">${S.notifCount}</span>`:''}
+    </button>`).join('');
+}
+
+function renderSidebar() {
+  return `
+    <div class="sb-logo">
+      <div class="sb-logo-icon">&#x1F331;</div>
+      <span class="sb-logo-text">FoodSave</span>
+    </div>
+    <div class="sb-user">
+      <div class="sb-user-row">
+        ${avatar(S.user.name)}
+        <div style="min-width:0">
+          <div class="sb-user-name">${esc(S.user.name)}</div>
+          ${badge(S.user.role)}
+        </div>
+      </div>
+    </div>
+    <nav class="sb-nav">${navLinks()}</nav>
+    <div class="sb-bottom">
+      <button class="sb-logout" onclick="logout()">
+        <span class="sb-link-icon">&#x21A9;</span>Sign out
+      </button>
+    </div>`;
+}
+
+function bindSidebar() {}
+
+// ─── Pages ────────────────────────────────────────────────────────────────────
+const PAGE_DATA = {};
+
+function renderPage() {
+  return `<div id="page-inner">${pageSpinner()}</div>`;
+}
+
+function pageSpinner() {
+  return `<div class="page-spinner"><div class="spinner"></div></div>`;
+}
+
+function setPageContent(html) {
+  const el = document.getElementById('page-inner');
+  if (el) el.innerHTML = html;
+}
+
+async function loadPage(page) {
+  switch(page) {
+    case 'dashboard':       await loadDashboard(); break;
+    case 'browse':          await loadBrowse(); break;
+    case 'create-listing':  renderCreateListing(); break;
+    case 'my-listings':     await loadMyListings(); break;
+    case 'my-claims':       await loadMyClaims(); break;
+    case 'notifications':   await loadNotifications(); break;
+    case 'admin-users':     await loadAdminUsers(); break;
+    case 'admin-listings':  await loadAdminListings(); break;
+    case 'admin-analytics': await loadAdminAnalytics(); break;
+  }
+}
+
+function bindPage() {}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function timeAgo(d) {
+  const s = Math.floor((Date.now() - new Date(d)) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+function timeLeft(d) {
+  const ms = new Date(d) - Date.now();
+  if (ms < 0) return 'Expired';
+  if (ms < 3600000) return Math.floor(ms/60000) + 'm left';
+  if (ms < 86400000) return Math.floor(ms/3600000) + 'h left';
+  return Math.floor(ms/86400000) + 'd left';
+}
+
+function statusBadge(s) {
+  const map = {
+    AVAILABLE:'badge-green',CLAIMED:'badge-amber',COMPLETED:'badge-blue',
+    EXPIRED:'badge-red',CANCELLED:'badge-muted',
+    PENDING:'badge-amber',CONFIRMED:'badge-green',PICKED_UP:'badge-blue'
+  };
+  return `<span class="badge ${map[s]||'badge-muted'}">${s.replace('_',' ')}</span>`;
+}
+
+const EMOJI = {COOKED_MEAL:'&#x1F371;',RAW_PRODUCE:'&#x1F966;',PACKAGED_FOOD:'&#x1F4E6;',BAKERY:'&#x1F35E;',DAIRY:'&#x1F95B;',BEVERAGES:'&#x1F9C3;',OTHER:'&#x1F37D;'};
+const CAT_LABELS = {COOKED_MEAL:'Cooked Meal',RAW_PRODUCE:'Raw Produce',PACKAGED_FOOD:'Packaged Food',BAKERY:'Bakery',DAIRY:'Dairy',BEVERAGES:'Beverages',OTHER:'Other'};
+
+function listingCard(l, showClaim=false) {
+  const expMs = l.expiresAt ? (new Date(l.expiresAt) - Date.now()) : Infinity;
+  const urgent = expMs > 0 && expMs < 3*3600000 && l.status === 'AVAILABLE';
+  return `
+    <div class="card listing-card" onclick="showListingModal('${l.id}')">
+      <div class="listing-strip"></div>
+      <div class="listing-body">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0">
+            <span style="font-size:20px;flex-shrink:0">${EMOJI[l.category]||'&#x1F37D;'}</span>
+            <div style="min-width:0">
+              <div class="listing-title">${esc(l.title)}</div>
+              <div class="listing-org">${esc(l.donor?.organization||l.donor?.name||'')}</div>
+            </div>
+          </div>
+          ${statusBadge(l.status)}
+        </div>
+        <div class="listing-meta">
+          <div class="listing-meta-row">&#x1F4E6; <span style="font-family:monospace">${l.quantity} ${esc(l.unit)}</span> · ${esc(CAT_LABELS[l.category])}</div>
+          <div class="listing-meta-row">&#x1F4CD; <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.address)}</span></div>
+                    <div class="listing-meta-row" style="color:${urgent?'var(--amber)':'var(--muted)'}">${urgent?'&#x26A1;':' &#x1F550;'} ${timeLeft(l.expiresAt)}</div>
+        </div>
+        ${showClaim && l.status==='AVAILABLE' && S.user?.role==='RECIPIENT' ?
+          `<button class="btn btn-green btn-sm" style="width:100%;margin-top:10px;justify-content:center"
+            onclick="event.stopPropagation();openClaimModal('${l.id}')">Claim Food</button>` : ''}
+      </div>
+    </div>`;
+}
+
+// ─── Listing Modal ────────────────────────────────────────────────────────────
+let allListings = [];
+const allListingsMap = {};
+
+function showListingModal(id) {
+  const l = allListingsMap[id] || allListings.find(x=>x.id===id);
+  if (!l) return;
+  const canClaim = S.user?.role==='RECIPIENT' && l.status==='AVAILABLE' && l.expiresAt && new Date(l.expiresAt) > new Date();
+  showModal(`<div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${[['Category',`${EMOJI[l.category]} ${CAT_LABELS[l.category]}`],
+         ['Quantity',`${l.quantity} ${l.unit}`],
+         ['Donor',l.donor?.organization||l.donor?.name||''],
+         ['Expires', l.expiresAt ? fmtDate(l.expiresAt) : 'Not set']
+        ].map(([k,v])=>`<div style="background:var(--bg-muted);border-radius:10px;padding:10px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${k}</div>
+          <div style="font-size:13px;font-weight:500">${esc(String(v))}</div>
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;margin-bottom:10px">
+      &#x1F4CD; ${esc(l.address)}
+    </div>
+    ${l.description?`<div style="background:var(--bg-muted);border-radius:10px;padding:12px;font-size:13px;color:var(--muted);margin-bottom:10px">${esc(l.description)}</div>`:''}
+    ${canClaim?`<button class="btn btn-green btn-full" onclick="closeModal();openClaimModal('${l.id}')">&#x1F91D; Claim This Food</button>`:''}
+  </div>`, esc(l.title));
+}
+
+function openClaimModal(listingId) {
+  const l = allListings.find(x=>x.id===listingId);
+  if (!l) return;
+  showModal(`<div>
+    <div class="form-group">
+      <label class="label">Quantity to claim (max ${l.quantity} ${l.unit})</label>
+      <input class="input" id="claim-qty" type="number" min="1" max="${l.quantity}" value="${l.quantity}">
+    </div>
+    <div class="form-group">
+      <label class="label">Scheduled pickup (optional)</label>
+      <input class="input" id="claim-sched" type="datetime-local">
+    </div>
+    <div class="form-group">
+      <label class="label">Notes (optional)</label>
+      <textarea class="input" id="claim-notes" rows="2" placeholder="Any special requirements…" style="resize:none"></textarea>
+    </div>
+    <div id="claim-err"></div>
+    <button class="btn btn-green btn-full" onclick="submitClaim('${listingId}')">Confirm Claim</button>
+  </div>`, 'Claim: ' + esc(l.title));
+}
+
+async function submitClaim(listingId) {
+  const qtyEl = document.getElementById('claim-qty');
+  const qty = parseInt(qtyEl ? qtyEl.value : '1') || 1;
+  const schedEl = document.getElementById('claim-sched');
+  const sched = schedEl ? schedEl.value : '';
+  const notesEl = document.getElementById('claim-notes');
+  const notes = notesEl ? notesEl.value : '';
+  try {
+    await gql(`mutation CreateClaim($lid:ID!,$qty:Int!,$notes:String,$sched:String){
+      createClaim(listingId:$lid,quantity:$qty,notes:$notes,scheduledAt:$sched){id}}`,
+      { lid: listingId, qty, notes: notes||undefined, sched: sched ? new Date(sched).toISOString() : undefined });
+    closeModal();
+    showToast('&#x2705; Claimed! The donor has been notified.');
+    loadBrowse();
+  } catch(e) {
+    document.getElementById('claim-err').innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const r = S.user.role;
+  if (r === 'ADMIN') await loadAdminDash();
+  else if (r === 'DONOR') await loadDonorDash();
+  else await loadRecipientDash();
+}
+
+async function loadAdminDash() {
+  const d = await gql(`query{adminStats{totalListings activeListings totalClaims completedClaims totalUsers wasteReducedKg topDonors{id name organization}}}`);
+  const s = d.adminStats;
+  const h = new Date().getHours();
+  const g = h<12?'morning':h<17?'afternoon':'evening';
+  setPageContent(`
+    <div class="gap"><h1 class="page-title">Good ${g}, ${esc(S.user.name.split(' ')[0])} &#x1F44B;</h1>
+    <p class="muted">Platform overview and management.</p></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+      ${[['Total Listings',s.totalListings,'&#x1F4E6;'],['Active Now',s.activeListings,'&#x1F33F;'],
+         ['Total Claims',s.totalClaims,'&#x1F91D;'],['Completed',s.completedClaims,'&#x2705;'],
+         ['Users',s.totalUsers,'&#x1F465;'],['Waste Reduced',s.wasteReducedKg.toFixed(1)+' kg','&#x267B;']
+        ].map(([l,v,i])=>`<div class="card stat-card"><div class="stat-label">${l}</div>
+          <div class="stat-val">${i} ${v}</div></div>`).join('')}
+    </div>
+    <div class="card" style="padding:18px">
+      <div class="section-title">&#x1F3C6; Top Donors</div>
+      ${s.topDonors.map((d,i)=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:12px;color:var(--muted);width:20px">#${i+1}</span>
+          <div><div style="font-size:13px;font-weight:500">${esc(d.name)}</div>
+          <div style="font-size:11px;color:var(--muted)">${esc(d.organization||'')}</div></div>
+        </div>`).join('')}
+    </div>`);
+}
+
+async function loadDonorDash() {
+  const d = await gql(`query{myListings{id title status quantity unit category createdAt expiresAt address latitude longitude donor{id name organization}}}`);
+  const ls = d.myListings;
+  const h = new Date().getHours();
+  const g = h<12?'morning':h<17?'afternoon':'evening';
+  const total=ls.length, active=ls.filter(l=>l.status==='AVAILABLE').length;
+  const claimed=ls.filter(l=>l.status==='CLAIMED').length, done=ls.filter(l=>l.status==='COMPLETED').length;
+  allListings = [...allListings, ...ls];
+  allListings.forEach(l => { allListingsMap[l.id] = l; });
+  setPageContent(`
+    <div class="gap"><h1 class="page-title">Good ${g}, ${esc(S.user.name.split(' ')[0])} &#x1F44B;</h1>
+    <p class="muted">Your food donations are making a difference.</p></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+      ${[['Total Posted',total,'&#x1F4E6;'],['Available',active,'&#x1F33F;'],['Claimed',claimed,'&#x1F91D;'],['Completed',done,'&#x2705;']]
+        .map(([l,v,i])=>`<div class="card stat-card"><div class="stat-label">${l}</div>
+          <div class="stat-val">${i} ${v}</div></div>`).join('')}
+    </div>
+    <div class="card" style="padding:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="section-title" style="margin:0">Recent Listings</div>
+        <button class="btn btn-green btn-sm" onclick="navigate('create-listing')">+ Donate Food</button>
+      </div>
+      ${ls.length===0?`<div class="empty"><div class="empty-icon">&#x1F371;</div><div class="empty-title">No listings yet</div>
+        <button class="btn btn-green" style="margin-top:12px" onclick="navigate('create-listing')">Donate Food</button></div>`
+        :`<div class="listing-grid">${ls.slice(0,6).map(l=>listingCard(l)).join('')}</div>`}
+    </div>`);
+}
+
+async function loadRecipientDash() {
+  const [cd, ld] = await Promise.all([
+    gql(`query{myClaims{id status quantity createdAt listing{id title unit donor{name organization} category}}}`),
+    gql(`query{listings(status:AVAILABLE,limit:4,strategy:composite){listings{id title description category quantity unit expiresAt status address latitude longitude donor{id name organization}}}}`)
+  ]);
+  const claims = cd.myClaims;
+  const ls = ld.listings.listings;
+  allListings = [...allListings, ...ls];
+  const h = new Date().getHours();
+  const g = h<12?'morning':h<17?'afternoon':'evening';
+  const active = claims.filter(c=>['PENDING','CONFIRMED'].includes(c.status));
+  setPageContent(`
+    <div class="gap"><h1 class="page-title">Good ${g}, ${esc(S.user.name.split(' ')[0])} &#x1F44B;</h1>
+    <p class="muted">Browse available food and claim what you need.</p></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+      ${[['Active Claims',active.length,'&#x23F3;'],['Total Claims',claims.length,'&#x1F4CB;'],
+         ['Completed',claims.filter(c=>c.status==='PICKED_UP').length,'&#x2705;']]
+        .map(([l,v,i])=>`<div class="card stat-card"><div class="stat-label">${l}</div>
+          <div class="stat-val">${i} ${v}</div></div>`).join('')}
+    </div>
+    ${active.length>0?`<div class="card" style="padding:18px;margin-bottom:20px">
+      <div class="section-title">Active Claims</div>
+      ${active.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;
+        padding:10px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:13px;font-weight:500">${esc(c.listing.title)}</div>
+          <div style="font-size:11px;color:var(--muted)">${esc(c.listing.donor?.organization||'')} · ${c.quantity} ${esc(c.listing.unit)}</div>
+        </div>${statusBadge(c.status)}</div>`).join('')}
+    </div>`:''}
+    <div class="card" style="padding:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="section-title" style="margin:0">Available Food Near You</div>
+        <button class="btn btn-muted btn-sm" onclick="navigate('browse')">View all →</button>
+      </div>
+      ${ls.length===0?`<div class="empty"><div class="empty-icon">&#x1F50D;</div><div class="empty-title">No food available right now</div></div>`
+        :`<div class="listing-grid">${ls.map(l=>listingCard(l,true)).join('')}</div>`}
+    </div>`);
+  bindPage();
+}
+
+// ─── Browse ───────────────────────────────────────────────────────────────────
+let browseStrategy = 'composite';
+let browseCategory = '';
+let browseSearch = '';
+
+async function loadBrowse() {
+  const d = await gql(`query GetListings($strategy:MatchingStrategy,$category:FoodCategory,$limit:Int){
+    listings(status:AVAILABLE,strategy:$strategy,category:$category,limit:$limit){
+      listings{id title description category quantity unit expiresAt status address latitude longitude
+        donor{id name organization}} total}}`,
+    { strategy: browseStrategy, category: browseCategory||undefined, limit: 50 });
+  d.listings.listings.forEach(l => { allListingsMap[l.id] = l; });
+  allListings = d.listings.listings;
+  const filtered = browseSearch
+    ? allListings.filter(l => l.title.toLowerCase().includes(browseSearch.toLowerCase()) ||
+        (l.donor?.organization||'').toLowerCase().includes(browseSearch.toLowerCase()))
+    : allListings;
+
+  setPageContent(`
+    <div class="gap"><h1 class="page-title">Browse Food</h1>
+    <p class="muted">${d.listings.total} listings available</p></div>
+    <div class="card filter-bar">
+      <div class="search-wrap">
+        <span class="search-icon">&#x1F50D;</span>
+        <input class="input" id="browse-search" placeholder="Search listings…" value="${esc(browseSearch)}" oninput="browseSearch=this.value;renderBrowseGrid()">
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${[['composite','&#x2B50; Best Match'],['proximity','&#x1F4CD; Nearest'],['urgency','&#x26A1; Urgent']]
+          .map(([v,l])=>`<button class="filter-btn${browseStrategy===v?' active':''}" onclick="browseStrategy='${v}';loadBrowse()">${l}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${[['','All'],...Object.entries(CAT_LABELS)]
+          .map(([v,l])=>`<button class="filter-btn${browseCategory===v?' active':''}" onclick="browseCategory='${v}';loadBrowse()">${l}</button>`).join('')}
+      </div>
+    </div>
+    <div id="browse-grid" class="listing-grid">${filtered.map(l=>listingCard(l,true)).join('')||
+      '<div class="empty"><div class="empty-icon">&#x1F50D;</div><div class="empty-title">No listings found</div></div>'}</div>`);
+}
+
+function renderBrowseGrid() {
+  const filtered = browseSearch
+    ? allListings.filter(l => l.title.toLowerCase().includes(browseSearch.toLowerCase()) ||
+        (l.donor?.organization||'').toLowerCase().includes(browseSearch.toLowerCase()))
+    : allListings;
+  const g = document.getElementById('browse-grid');
+  if (g) g.innerHTML = filtered.map(l=>listingCard(l,true)).join('') ||
+    '<div class="empty"><div class="empty-icon">&#x1F50D;</div><div class="empty-title">No listings found</div></div>';
+}
+
+// ─── Create Listing ───────────────────────────────────────────────────────────
+function renderCreateListing() {
+  const addHours = hrs => {
+    const d = new Date(Date.now() + hrs*3600000);
+    return d.toISOString().slice(0,16);
+  };
+  setPageContent(`
+    <div class="gap"><h1 class="page-title">Donate Surplus Food</h1>
+    <p class="muted">List your surplus food so NGOs and shelters can claim it.</p></div>
+    <div class="card" style="padding:22px;max-width:600px">
+      <div id="create-err"></div>
+      <div class="form-group">
+        <label class="label">Listing Title *</label>
+        <input class="input" id="cl-title" placeholder="e.g. Fresh Biryani — 50 Portions">
+      </div>
+      <div class="form-group">
+        <label class="label">Category *</label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          ${Object.entries(EMOJI).map(([v,e])=>`
+            <button id="cat-${v}" onclick="selectCat('${v}')"
+              style="padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:var(--bg-muted);
+                color:var(--muted);font-size:12px;text-align:center;transition:all .15s;cursor:pointer">
+              <div style="font-size:20px;margin-bottom:4px">${e}</div>${CAT_LABELS[v]}
+            </button>`).join('')}
+        </div>
+        <input type="hidden" id="cl-category" value="">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="label">Quantity *</label>
+          <input class="input" id="cl-qty" type="number" min="1" value="10">
+        </div>
+        <div class="form-group">
+          <label class="label">Unit</label>
+          <select class="input" id="cl-unit">
+            ${['portions','kg','litres','packets','boxes','loaves','items'].map(u=>`<option>${u}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="label">Description</label>
+        <textarea class="input" id="cl-desc" rows="2" style="resize:none" placeholder="Describe the food, allergens…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="label">Expiry Date & Time *</label>
+        <input class="input" id="cl-expiry" type="datetime-local" value="${addHours(6)}">
+        <div style="display:flex;gap:6px;margin-top:6px">
+          ${[2,4,6,12,24].map(hrs=>`<button class="filter-btn btn-sm" onclick="document.getElementById('cl-expiry').value='${addHours(hrs)}'">+${hrs}h</button>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="label">Pickup Address *</label>
+        <input class="input" id="cl-addr" placeholder="Full pickup address" value="${esc(S.user.address||'')}">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="label">Latitude</label>
+          <input class="input" id="cl-lat" type="number" step="any" value="${S.user.latitude||13.0827}">
+        </div>
+        <div class="form-group">
+          <label class="label">Longitude</label>
+          <input class="input" id="cl-lng" type="number" step="any" value="${S.user.longitude||80.2707}">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button class="btn btn-muted" style="flex:1" onclick="navigate('dashboard')">Cancel</button>
+        <button class="btn btn-green" style="flex:1" onclick="submitListing()" id="cl-submit">&#x1F371; Post Listing</button>
+      </div>
+    </div>`);
+}
+
+function selectCat(v) {
+  document.getElementById('cl-category').value = v;
+  document.querySelectorAll('[id^="cat-"]').forEach(el => {
+    el.style.borderColor = 'var(--border)';
+    el.style.color = 'var(--muted)';
+    el.style.background = 'var(--bg-muted)';
+  });
+  const btn = document.getElementById('cat-'+v);
+  if (btn) { btn.style.borderColor='var(--green)'; btn.style.color='var(--white)'; btn.style.background='rgba(34,197,94,.1)'; }
+}
+
+async function submitListing() {
+  const title = document.getElementById('cl-title').value.trim();
+  const category = document.getElementById('cl-category').value;
+  const qty = parseInt(document.getElementById('cl-qty').value);
+  const unit = document.getElementById('cl-unit').value;
+  const desc = document.getElementById('cl-desc').value.trim();
+  const expiry = document.getElementById('cl-expiry').value;
+  const addr = document.getElementById('cl-addr').value.trim();
+  const lat = parseFloat(document.getElementById('cl-lat').value);
+  const lng = parseFloat(document.getElementById('cl-lng').value);
+  const errEl = document.getElementById('create-err');
+  if (!title) { errEl.innerHTML='<div class="alert alert-error">Title is required</div>'; return; }
+  if (!category) { errEl.innerHTML='<div class="alert alert-error">Please select a category by clicking one of the boxes above</div>'; return; }
+  if (!addr) { errEl.innerHTML='<div class="alert alert-error">Address is required</div>'; return; }
+  const btn = document.getElementById('cl-submit');
+  btn.disabled = true; btn.textContent = 'Posting…';
+  try {
+    await gql(`mutation CreateListing($title:String!,$desc:String,$cat:FoodCategory!,$qty:Int!,$unit:String,
+      $exp:String!,$addr:String!,$lat:Float!,$lng:Float!){
+      createListing(title:$title,description:$desc,category:$cat,quantity:$qty,unit:$unit,
+        expiresAt:$exp,address:$addr,latitude:$lat,longitude:$lng){id}}`,
+      { title, desc: desc||undefined, cat: category, qty, unit, exp: expiry ? new Date(expiry).toISOString() : new Date(Date.now()+6*3600000).toISOString(), addr, lat, lng });
+    showToast('&#x2705; Listing posted! Recipients have been notified.');
+    navigate('my-listings');
+  } catch(e) {
+    errEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+    btn.disabled = false; btn.textContent = '&#x1F371; Post Listing';
+  }
+}
+
+// ─── My Listings ──────────────────────────────────────────────────────────────
+let myListingsData = [];
+
+async function loadMyListings() {
+  const d = await gql(`query{myListings{id title status quantity unit category createdAt expiresAt address latitude longitude donor{id name organization} claims{id status quantity notes createdAt scheduledAt recipient{id name organization phone}}}}`);
+  myListingsData = d.myListings;
+  allListings = [...allListings, ...myListingsData];
+  allListings.forEach(l => { allListingsMap[l.id] = l; });
+  allListings.forEach(l => { allListingsMap[l.id] = l; });
+  renderMyListings();
+}
+
+function renderMyListings() {
+  setPageContent(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div><h1 class="page-title">My Listings</h1>
+      <p class="muted">${myListingsData.length} total donations</p></div>
+      <button class="btn btn-green" onclick="navigate('create-listing')">+ Donate Food</button>
+    </div>
+    <div id="my-listings-err"></div>
+    ${myListingsData.length===0
+      ?`<div class="empty"><div class="empty-icon">&#x1F371;</div><div class="empty-title">No listings yet</div>
+        <button class="btn btn-green" style="margin-top:12px" onclick="navigate('create-listing')">Donate Food</button></div>`
+      :`<div style="display:flex;flex-direction:column;gap:10px">
+        ${myListingsData.map(l => renderListingRow(l)).join('')}</div>`}
+    <div id="delete-modal" style="display:none" class="modal-overlay">
+      <div class="modal"><div class="modal-header">
+        <span class="modal-title">Remove Listing</span>
+        <button class="modal-close" onclick="document.getElementById('delete-modal').style.display='none'">&#x2715;</button>
+      </div><div class="modal-body">
+        <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Are you sure? This cannot be undone.</p>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-muted" style="flex:1" onclick="document.getElementById('delete-modal').style.display='none'">Cancel</button>
+          <button class="btn btn-red" style="flex:1" id="confirm-delete-btn">Remove</button>
+        </div></div></div></div>`);
+}
+
+function renderListingRow(l) {
+  const hasClaims = l.claims && l.claims.length > 0;
+  const pending = (l.claims||[]).filter(c=>c.status==='PENDING');
+  return `<div class="card" style="overflow:hidden">
+    <div class="row-item">
+      <span style="font-size:22px">${EMOJI[l.category]||'&#x1F37D;'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:13px;font-weight:600">${esc(l.title)}</span>
+          ${statusBadge(l.status)}
+          ${pending.length>0?`<span class="badge badge-amber">&#x26A0; ${pending.length} pending</span>`:''}
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">
+          ${l.quantity} ${esc(l.unit)} · ${CAT_LABELS[l.category]} · ${timeAgo(l.createdAt)}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${hasClaims?`<button class="btn btn-muted btn-sm" onclick="toggleClaims('claims-${l.id}')">
+          ${l.claims.length} claim${l.claims.length!==1?'s':''} &#x25BE;</button>`:''}
+        ${l.status==='AVAILABLE'?`<button class="btn btn-red btn-sm" onclick="deleteListing('${l.id}')">&#x1F5D1;</button>`:''}
+      </div>
+    </div>
+    ${hasClaims?`<div id="claims-${l.id}" class="claim-panel" style="display:none">
+      ${l.claims.map(c=>`<div class="claim-row">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500">${esc(c.recipient?.organization||c.recipient?.name||'')}</div>
+          <div style="font-size:11px;color:var(--muted)">${c.quantity} ${esc(l.unit)} · ${timeAgo(c.createdAt)}${c.notes?` · "${esc(c.notes)}"`:''}</div>
+        </div>
+        ${statusBadge(c.status)}
+        ${c.status==='PENDING'?`<div style="display:flex;gap:6px">
+          <button class="btn btn-green btn-sm" onclick="updateClaim('${c.id}','CONFIRMED','${l.id}')">&#x2713; Confirm</button>
+          <button class="btn btn-red btn-sm" onclick="updateClaim('${c.id}','CANCELLED','${l.id}')">&#x2715;</button>
+        </div>`:''}
+      </div>`).join('')}
+    </div>`:''}
+  </div>`;
+}
+
+function toggleClaims(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display==='none' ? 'block' : 'none';
+}
+
+async function updateClaim(claimId, status, listingId) {
+  try {
+    await gql(`mutation UpdateClaim($id:ID!,$status:ClaimStatus!){updateClaimStatus(id:$id,status:$status){id status}}`,
+      { id: claimId, status });
+    showToast(status==='CONFIRMED'?'&#x2705; Claim confirmed!':'&#x274C; Claim declined');
+    loadMyListings();
+  } catch(e) {
+    const el = document.getElementById('my-listings-err');
+    if (el) el.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+function deleteListing(id) {
+  const modal = document.getElementById('delete-modal');
+  modal.style.display = 'flex';
+  const btn = document.getElementById('confirm-delete-btn');
+  btn.onclick = async () => {
+    try {
+      await gql(`mutation Del($id:ID!){deleteListing(id:$id)}`, { id });
+      modal.style.display = 'none';
+      showToast('Listing removed');
+      loadMyListings();
+    } catch(e) {
+      modal.style.display = 'none';
+      const el = document.getElementById('my-listings-err');
+      if (el) el.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+    }
+  };
+}
+
+// ─── My Claims ────────────────────────────────────────────────────────────────
+async function loadMyClaims() {
+  const d = await gql(`query{myClaims{id status quantity notes createdAt scheduledAt pickedUpAt
+    listing{id title unit category expiresAt donor{name organization}}
+    recipient{id name}}}`);
+  const claims = d.myClaims;
+  const active = claims.filter(c=>['PENDING','CONFIRMED'].includes(c.status));
+  const past = claims.filter(c=>['PICKED_UP','CANCELLED'].includes(c.status));
+
+  setPageContent(`
+    <div class="gap"><h1 class="page-title">My Claims</h1>
+    <p class="muted">${claims.length} total · ${active.length} active</p></div>
+    <div id="claims-err"></div>
+    ${claims.length===0?`<div class="empty"><div class="empty-icon">&#x1F91D;</div>
+      <div class="empty-title">No claims yet</div>
+      <button class="btn btn-green" style="margin-top:12px" onclick="navigate('browse')">Browse Food</button></div>`:''}
+    ${active.length>0?`<div class="section-title">Active Claims</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+        ${active.map(c=>renderClaimRow(c,false)).join('')}</div>`:''}
+    ${past.length>0?`<div class="section-title" style="color:var(--muted)">Past Claims</div>
+      <div style="display:flex;flex-direction:column;gap:10px;opacity:.6">
+        ${past.map(c=>renderClaimRow(c,true)).join('')}</div>`:''}
+  `);
+}
+
+function renderClaimRow(c, past) {
+  const statusMsg = c.status==='PENDING'
+    ? '<div style="font-size:11px;color:var(--amber);margin-top:4px">&#x23F3; Waiting for donor to confirm</div>'
+    : c.status==='CONFIRMED'
+    ? '<div style="font-size:11px;color:var(--green-l);margin-top:4px">&#x2705; Confirmed! Please pick up and mark collected</div>'
+    : '';
+  return `<div class="card row-item">
+    <span style="font-size:22px">${EMOJI[c.listing?.category]||'&#x1F37D;'}</span>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:13px;font-weight:600">${esc(c.listing?.title||'')}</span>
+        ${statusBadge(c.status)}
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">
+        ${c.quantity} ${esc(c.listing?.unit||'')} · ${esc(c.listing?.donor?.organization||c.listing?.donor?.name||'')} · ${timeAgo(c.createdAt)}${c.scheduledAt ? ' · Pickup: '+fmtDate(c.scheduledAt) : ''}
+      </div>
+      ${statusMsg}
+    </div>
+    ${!past?`<div style="display:flex;flex-direction:column;gap:6px">
+      ${c.status==='CONFIRMED'?`<button class="btn btn-green btn-sm" onclick="updateMyClaimStatus('${c.id}','PICKED_UP')">&#x2713; Picked Up</button>`:''}
+      ${['PENDING','CONFIRMED'].includes(c.status)?`<button class="btn btn-red btn-sm" onclick="updateMyClaimStatus('${c.id}','CANCELLED')">&#x2715; Cancel</button>`:''}
+    </div>`:''}
+  </div>`;
+}
+
+async function updateMyClaimStatus(claimId, status) {
+  try {
+    await gql(`mutation UpdateClaim($id:ID!,$status:ClaimStatus!){updateClaimStatus(id:$id,status:$status){id status}}`,
+      { id: claimId, status });
+    showToast(status==='PICKED_UP'?'&#x2705; Marked as picked up!':'&#x274C; Claim cancelled');
+    loadMyClaims();
+  } catch(e) {
+    const el = document.getElementById('claims-err');
+    if (el) el.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+async function loadNotifications() {
+  const d = await gql(`query{myNotifications{id type message isRead createdAt listing{id title}}}`);
+  const notifs = d.myNotifications;
+  const unread = notifs.filter(n=>!n.isRead);
+  const TYPE_EMOJI = {NEW_LISTING:'&#x1F371;',LISTING_CLAIMED:'&#x1F91D;',CLAIM_CONFIRMED:'&#x2705;',LISTING_EXPIRED:'&#x23F0;',CLAIM_CANCELLED:'&#x274C;'};
+
+  setPageContent(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div><h1 class="page-title">Notifications</h1>
+      <p class="muted">${unread.length>0?`${unread.length} unread`:'All caught up'}</p></div>
+      ${unread.length>0?`<button class="btn btn-muted btn-sm" onclick="markAllRead()">&#x2713; Mark all read</button>`:''}
+    </div>
+    ${notifs.length===0?`<div class="empty"><div class="empty-icon">&#x1F514;</div>
+      <div class="empty-title">No notifications yet</div></div>`:''}
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${notifs.map(n=>`
+        <button onclick="markNotifRead('${n.id}')" style="display:flex;align-items:flex-start;gap:12px;padding:14px;
+          border-radius:14px;border:1px solid ${!n.isRead?'rgba(34,197,94,.2)':'var(--border)'};
+          background:rgba(22,32,25,.7);text-align:left;transition:all .15s;width:100%;
+          opacity:${n.isRead?.6:1};cursor:pointer">
+          <span style="font-size:20px;flex-shrink:0;margin-top:2px">${TYPE_EMOJI[n.type]||'&#x1F4E2;'}</span>
+          <div style="flex:1;min-width:0">
+            <p style="font-size:13px;color:${n.isRead?'var(--muted)':'var(--white)'};margin-bottom:4px">${esc(n.message)}</p>
+            ${n.listing?`<p style="font-size:11px;color:var(--faint)">&#x1F4E6; ${esc(n.listing.title)}</p>`:''}
+            <p style="font-size:11px;color:var(--muted);margin-top:3px">${timeAgo(n.createdAt)}</p>
+          </div>
+          ${!n.isRead?`<div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px"></div>`:''}
+        </button>`).join('')}
+    </div>`);
+}
+
+async function markNotifRead(id) {
+  try {
+    await gql(`mutation Mark($id:ID!){markNotificationRead(id:$id){id isRead}}`, { id });
+    S.notifCount = Math.max(0, S.notifCount - 1);
+    updateNotifBadge();
+    loadNotifications();
+  } catch(e) {}
+}
+
+async function markAllRead() {
+  try {
+    await gql(`mutation{markAllNotificationsRead}`);
+    S.notifCount = 0;
+    updateNotifBadge();
+    loadNotifications();
+  } catch(e) {}
+}
+
+function updateNotifBadge() {
+  const badge = document.querySelector('.notif-badge');
+  if (badge) {
+    if (S.notifCount > 0) badge.textContent = S.notifCount;
+    else badge.style.display = 'none';
+  }
+}
+
+// ─── Admin Users ──────────────────────────────────────────────────────────────
+let adminUsersData = [];
+let adminUsersFilter = '';
+let adminUsersRole = '';
+
+async function loadAdminUsers() {
+  const d = await gql(`query AllUsers($role:UserRole){allUsers(role:$role){id email name role organization address isActive createdAt}}`,
+    { role: adminUsersRole||undefined });
+  adminUsersData = d.allUsers;
+  renderAdminUsers();
+}
+
+function renderAdminUsers() {
+  const filtered = adminUsersFilter
+    ? adminUsersData.filter(u =>
+        u.name.toLowerCase().includes(adminUsersFilter.toLowerCase()) ||
+        u.email.toLowerCase().includes(adminUsersFilter.toLowerCase()) ||
+        (u.organization||'').toLowerCase().includes(adminUsersFilter.toLowerCase()))
+    : adminUsersData;
+
+  setPageContent(`
+    <div class="gap"><h1 class="page-title">Users</h1>
+    <p class="muted">${adminUsersData.length} registered users</p></div>
+    <div class="card filter-bar">
+      <div class="search-wrap">
+        <span class="search-icon">&#x1F50D;</span>
+        <input class="input" placeholder="Search users…" value="${esc(adminUsersFilter)}"
+          oninput="adminUsersFilter=this.value;renderAdminUsers()">
+      </div>
+      <div style="display:flex;gap:6px">
+        ${[['','All'],['DONOR','Donors'],['RECIPIENT','Recipients'],['ADMIN','Admins']]
+          .map(([v,l])=>`<button class="filter-btn${adminUsersRole===v?' active':''}"
+            onclick="adminUsersRole='${v}';loadAdminUsers()">${l}</button>`).join('')}
+      </div>
+    </div>
+    ${filtered.length===0?`<div class="empty"><div class="empty-icon">&#x1F465;</div><div class="empty-title">No users found</div></div>`:''}
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${filtered.map(u=>`<div class="card row-item">
+        <div class="sb-avatar" style="width:38px;height:38px;font-size:13px">${(u.name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:600">${esc(u.name)}</span>
+            <span class="sb-role role-${u.role}">${u.role}</span>
+            ${!u.isActive?`<span class="badge badge-red">INACTIVE</span>`:''}
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${esc(u.email)}</div>
+          ${u.organization?`<div style="font-size:11px;color:var(--muted)">${esc(u.organization)}</div>`:''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--muted)">Joined ${timeAgo(u.createdAt)}</div>
+          ${u.address?`<div style="font-size:11px;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.address)}</div>`:''}
+        </div>
+      </div>`).join('')}
+    </div>`);
+}
+
+// ─── Admin Listings ───────────────────────────────────────────────────────────
+let adminListingsData = [];
+let adminListingsFilter = '';
+let adminListingsStatus = '';
+
+async function loadAdminListings() {
+  const d = await gql(`query GetListings($status:ListingStatus,$limit:Int){listings(status:$status,limit:$limit){
+    listings{id title status quantity unit category createdAt address donor{id name organization}} total}}`,
+    { status: adminListingsStatus||undefined, limit: 100 });
+  adminListingsData = d.listings.listings;
+  renderAdminListings();
+}
+
+function renderAdminListings() {
+  const filtered = adminListingsFilter
+    ? adminListingsData.filter(l =>
+        l.title.toLowerCase().includes(adminListingsFilter.toLowerCase()) ||
+        (l.donor?.name||'').toLowerCase().includes(adminListingsFilter.toLowerCase()) ||
+        (l.donor?.organization||'').toLowerCase().includes(adminListingsFilter.toLowerCase()))
+    : adminListingsData;
+
+  setPageContent(`
+    <div class="gap"><h1 class="page-title">All Listings</h1>
+    <p class="muted">${adminListingsData.length} listings</p></div>
+    <div class="card filter-bar">
+      <div class="search-wrap">
+        <span class="search-icon">&#x1F50D;</span>
+        <input class="input" placeholder="Search listings…" value="${esc(adminListingsFilter)}"
+          oninput="adminListingsFilter=this.value;renderAdminListings()">
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${[['','All'],['AVAILABLE','Available'],['CLAIMED','Claimed'],['COMPLETED','Completed'],['EXPIRED','Expired'],['CANCELLED','Cancelled']]
+          .map(([v,l])=>`<button class="filter-btn${adminListingsStatus===v?' active':''}"
+            onclick="adminListingsStatus='${v}';loadAdminListings()">${l}</button>`).join('')}
+      </div>
+    </div>
+    <div id="admin-list-err"></div>
+    ${filtered.length===0?`<div class="empty"><div class="empty-icon">&#x1F4E6;</div><div class="empty-title">No listings found</div></div>`:''}
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${filtered.map(l=>`<div class="card row-item">
+        <span style="font-size:22px">${EMOJI[l.category]||'&#x1F37D;'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:600">${esc(l.title)}</span>
+            ${statusBadge(l.status)}
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">
+            ${l.quantity} ${esc(l.unit)} · by ${esc(l.donor?.organization||l.donor?.name||'')} · ${timeAgo(l.createdAt)}
+          </div>
+        </div>
+        ${l.status==='AVAILABLE'?`<button class="btn btn-red btn-sm"
+          onclick="adminCancelListing('${l.id}')">Cancel</button>`:''}
+      </div>`).join('')}
+    </div>`);
+}
+
+async function adminCancelListing(id) {
+  try {
+    await gql(`mutation UpdateListing($id:ID!,$status:ListingStatus){updateListing(id:$id,status:$status){id}}`,
+      { id, status: 'CANCELLED' });
+    showToast('Listing cancelled');
+    loadAdminListings();
+  } catch(e) {
+    const el = document.getElementById('admin-list-err');
+    if (el) el.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ─── Admin Analytics ──────────────────────────────────────────────────────────
+async function loadAdminAnalytics() {
+  const d = await gql(`query{adminStats{totalListings activeListings totalClaims completedClaims totalUsers wasteReducedKg topDonors{id name organization}}}`);
+  const s = d.adminStats;
+  const pct = s.totalClaims > 0 ? Math.round(s.completedClaims / s.totalClaims * 100) : 0;
+  setPageContent(`
+    <div class="gap"><h1 class="page-title">Analytics</h1>
+    <p class="muted">Platform-wide impact metrics</p></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+      ${[['Total Listings',s.totalListings,'&#x1F4E6;'],['Active Now',s.activeListings,'&#x1F33F;'],
+         ['Total Claims',s.totalClaims,'&#x1F91D;'],['Completed',s.completedClaims,'&#x2705;'],
+         ['Total Users',s.totalUsers,'&#x1F465;'],['Waste Reduced',s.wasteReducedKg.toFixed(1)+' kg','&#x267B;']]
+        .map(([l,v,i])=>`<div class="card stat-card"><div class="stat-label">${l}</div>
+          <div class="stat-val">${i} ${v}</div></div>`).join('')}
+    </div>
+    <div class="card" style="padding:18px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="section-title" style="margin:0">Claim Completion Rate</div>
+        <span style="font-size:24px;font-weight:700;color:var(--green-l)">${pct}%</span>
+      </div>
+      <div class="progress-bg"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="font-size:11px;color:var(--muted)">${s.completedClaims} completed</span>
+        <span style="font-size:11px;color:var(--muted)">${s.totalClaims} total</span>
+      </div>
+    </div>
+    <div class="card" style="padding:18px;margin-bottom:16px">
+      <div class="section-title">Environmental Impact</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        ${[['CO₂ Saved',(s.wasteReducedKg*2.5).toFixed(0)+' kg','&#x1F331;'],
+           ['Meals Served','~'+(s.completedClaims*15),'&#x1F37D;'],
+           ['Families Fed','~'+Math.round(s.completedClaims*3),'&#x1F468;&#x200D;&#x1F469;&#x200D;&#x1F467;']]
+          .map(([l,v,i])=>`<div style="background:var(--bg-muted);border-radius:12px;padding:16px;text-align:center">
+            <div style="font-size:24px;margin-bottom:6px">${i}</div>
+            <div style="font-size:18px;font-weight:700">${v}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">${l}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="padding:18px">
+      <div class="section-title">&#x1F3C6; Top Donors</div>
+      ${s.topDonors.map((d,i)=>`<div style="display:flex;align-items:center;gap:10px;
+        padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--muted);width:20px">#${i+1}</span>
+        <div style="font-size:16px">${['&#x1F947;','&#x1F948;','&#x1F949;'][i]||''}</div>
+        <div><div style="font-size:13px;font-weight:500">${esc(d.name)}</div>
+          <div style="font-size:11px;color:var(--muted)">${esc(d.organization||'')}</div></div>
+      </div>`).join('')}
+    </div>`);
+}
+
+// ─── Auth Page ────────────────────────────────────────────────────────────────
+function renderAuth() {
+  return `<div id="auth-page">
+    <div class="auth-left">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="sb-logo-icon">&#x1F331;</div>
+        <span style="font-size:20px;font-weight:700">FoodSave</span>
+      </div>
+      <div>
+        <h1 style="font-size:36px;font-weight:700;line-height:1.2;margin-bottom:16px">
+          Reduce waste.<br><span style="color:var(--green-l)">Feed communities.</span>
+        </h1>
+        <p style="color:var(--muted);line-height:1.6;margin-bottom:28px">
+          Connect surplus food from restaurants and households to NGOs and shelters.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${[['&#x1F371;','Donors list surplus food in seconds'],
+             ['&#x1F91D;','Smart matching finds nearby recipients'],
+             ['&#x267B;','Track your real-world impact']].map(([e,l])=>
+            `<div style="display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px">
+              <span style="font-size:18px">${e}</span>${l}</div>`).join('')}
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--muted)">© 2025 FoodSave Platform</p>
+    </div>
+    <div class="auth-right">
+      <div class="auth-form">
+        <div class="auth-tabs">
+          <button id="tab-login" class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+          <button id="tab-register" class="auth-tab" onclick="switchTab('register')">Create Account</button>
+        </div>
+        <div id="auth-title" style="font-size:22px;font-weight:700;margin-bottom:4px">Welcome back</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:18px">Sign in to your account</div>
+        <div id="auth-err"></div>
+        <div id="register-fields" style="display:none">
+          <div class="form-group">
+            <label class="label">Full Name</label>
+            <input class="input" id="reg-name" placeholder="Your full name">
+          </div>
+          <div class="form-group">
+            <label class="label">I am a</label>
+            <select class="input" id="reg-role" onchange="toggleOrgField()">
+              <option value="RECIPIENT">Recipient (NGO / Shelter)</option>
+              <option value="DONOR">Donor (Restaurant / Individual)</option>
+            </select>
+          </div>
+          <div id="org-field" class="form-group" style="display:none">
+            <label class="label">Organization Name *</label>
+            <input class="input" id="reg-org" placeholder="Restaurant or organization name">
+          </div>
+          <div class="form-group">
+            <label class="label">Address *</label>
+            <input class="input" id="reg-addr" placeholder="Your address">
+          </div>
+          <div class="form-group">
+            <label class="label">Phone (optional)</label>
+            <input class="input" id="reg-phone" placeholder="+91 00000 00000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="label">Email</label>
+          <input class="input" id="auth-email" type="email" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label class="label">Password</label>
+          <input class="input" id="auth-pass" type="password" placeholder="Min. 8 characters">
+        </div>
+        <button class="btn btn-green btn-full" id="auth-submit" onclick="handleAuth()">Sign In</button>
+        <div class="demo-box">
+          <div style="font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:8px">Demo accounts (password: password123)</div>
+          ${[['admin@foodsave.com','Admin'],['restaurant@example.com','Donor'],['ngo@example.com','Recipient']]
+            .map(([e,r])=>`<button class="demo-item" onclick="fillDemo('${e}')">
+              <span class="demo-role">${r}</span><span class="demo-email">${e}</span>
+            </button>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+let authMode = 'login';
+function switchTab(mode) {
+  authMode = mode;
+  document.getElementById('tab-login').classList.toggle('active', mode==='login');
+  document.getElementById('tab-register').classList.toggle('active', mode==='register');
+  document.getElementById('register-fields').style.display = mode==='register'?'block':'none';
+  document.getElementById('auth-title').textContent = mode==='login'?'Welcome back':'Join FoodSave';
+  document.getElementById('auth-submit').textContent = mode==='login'?'Sign In':'Create Account';
+  document.getElementById('auth-err').innerHTML = '';
+}
+function toggleOrgField() {
+  const role = document.getElementById('reg-role')?.value;
+  const el = document.getElementById('org-field');
+  if (el) el.style.display = role==='DONOR'?'block':'none';
+}
+function fillDemo(email) {
+  switchTab('login');
+  document.getElementById('auth-email').value = email;
+  document.getElementById('auth-pass').value = 'password123';
+}
+function bindAuth() {
+  document.getElementById('auth-pass')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleAuth();
+  });
+}
+async function handleAuth() {
+  const email = document.getElementById('auth-email')?.value.trim();
+  const pass = document.getElementById('auth-pass')?.value;
+  const errEl = document.getElementById('auth-err');
+  const btn = document.getElementById('auth-submit');
+  if (!email || !pass) { errEl.innerHTML='<div class="alert alert-error">Please fill all fields</div>'; return; }
+  btn.disabled = true; btn.textContent = 'Please wait…';
+  try {
+    if (authMode === 'login') {
+      await doLogin(email, pass);
+    } else {
+      const name = document.getElementById('reg-name')?.value.trim();
+      const role = document.getElementById('reg-role')?.value || 'RECIPIENT';
+      const org = document.getElementById('reg-org')?.value.trim();
+      const addr = document.getElementById('reg-addr')?.value.trim();
+      const phone = document.getElementById('reg-phone')?.value.trim();
+      if (!name) { errEl.innerHTML='<div class="alert alert-error">Name is required</div>'; btn.disabled=false; btn.textContent='Create Account'; return; }
+      await doRegister({ email, password: pass, name, role, organization: org||undefined, address: addr||undefined, phone: phone||undefined });
+    }
+  } catch(e) {
+    errEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+    btn.disabled = false;
+    btn.textContent = authMode==='login'?'Sign In':'Create Account';
+  }
+}
+
+// ─── Modal helpers ────────────────────────────────────────────────────────────
+function showModal(body, title='') {
+  const existing = document.getElementById('global-modal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'global-modal';
+  div.className = 'modal-overlay';
+  div.innerHTML = `<div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">${title}</span>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">${body}</div>
+  </div>`;
+  div.addEventListener('click', e => { if(e.target===div) closeModal(); });
+  document.body.appendChild(div);
+}
+function closeModal() {
+  const m = document.getElementById('global-modal');
+  if (m) m.remove();
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--bg-muted);border:1px solid var(--border);'+
+    'border-radius:12px;padding:12px 18px;font-size:13px;color:var(--white);z-index:100;box-shadow:0 8px 32px rgba(0,0,0,.4);'+
+    'animation:fadeIn .3s ease';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  try {
+    boot();
+  } catch(e) {
+    document.getElementById('app').innerHTML = 
+      '<div style="color:red;padding:40px;font-family:monospace;font-size:14px">' +
+      '<h2>JavaScript Error:</h2><pre>' + e.message + '\n' + e.stack + '</pre>' +
+      '<p style="margin-top:20px">Please open F12 console for details.</p></div>';
+  }
+});
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('Unhandled promise rejection:', e.reason);
+});
+</script>
+</body>
+</html>

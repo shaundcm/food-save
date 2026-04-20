@@ -1,0 +1,133 @@
+// This is your Prisma schema file
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  DONOR
+  RECIPIENT
+  ADMIN
+}
+
+enum FoodCategory {
+  COOKED_MEAL
+  RAW_PRODUCE
+  PACKAGED_FOOD
+  BAKERY
+  DAIRY
+  BEVERAGES
+  OTHER
+}
+
+enum ListingStatus {
+  AVAILABLE
+  CLAIMED
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+enum ClaimStatus {
+  PENDING
+  CONFIRMED
+  PICKED_UP
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole
+  phone        String?
+  address      String?
+  latitude     Float?
+  longitude    Float?
+  organization String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  foodListings FoodListing[]
+  claims       Claim[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model FoodListing {
+  id            String        @id @default(uuid())
+  title         String
+  description   String?
+  category      FoodCategory
+  quantity      Int
+  unit          String        @default("portions")
+  expiresAt     DateTime
+  status        ListingStatus @default(AVAILABLE)
+  address       String
+  latitude      Float
+  longitude     Float
+  imageUrl      String?
+  donorId       String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  donor  User    @relation(fields: [donorId], references: [id])
+  claims Claim[]
+  notifications Notification[]
+
+  @@map("food_listings")
+}
+
+model Claim {
+  id          String      @id @default(uuid())
+  listingId   String
+  recipientId String
+  status      ClaimStatus @default(PENDING)
+  quantity    Int
+  notes       String?
+  scheduledAt DateTime?
+  pickedUpAt  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  listing   FoodListing @relation(fields: [listingId], references: [id])
+  recipient User        @relation(fields: [recipientId], references: [id])
+
+  @@map("claims")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  listingId String?
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user    User         @relation(fields: [userId], references: [id])
+  listing FoodListing? @relation(fields: [listingId], references: [id])
+
+  @@map("notifications")
+}
+
+model Analytics {
+  id            String   @id @default(uuid())
+  date          DateTime @default(now())
+  totalListings Int      @default(0)
+  totalClaims   Int      @default(0)
+  totalCompleted Int     @default(0)
+  wasteReduced  Float    @default(0)
+  activeUsers   Int      @default(0)
+
+  @@map("analytics")
+}
